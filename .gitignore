@@ -3,4 +3,3 @@ __pycache__/
 *.pyc
 database.db
 .idea
-today_tz.txt

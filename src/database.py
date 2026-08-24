@@ -6,12 +6,25 @@ def get_connection():
     connection.row_factory = sql.Row
     return connection
 
-
 def get_users(connection):
     cursor = connection.cursor()
-    cursor.execute("SELECT * FROM users")
+    cursor.execute("""
+    SELECT
+        users.user_id,
+        users.username,
+        users.email,
+        users.city,
+        COUNT(DISTINCT orders.order_id) AS orders_count,
+        COALESCE(SUM(order_items.quantity),0) AS total_quantity,
+        COALESCE(SUM(order_items.quantity*order_items.price_at_the_moment),0) AS revenue
+    FROM users
+    LEFT JOIN orders
+        ON orders.user_id = users.user_id
+        AND orders.status = 'completed'
+    LEFT JOIN order_items
+        ON order_items.order_id = orders.order_id
+    GROUP BY users.user_id""")
     return cursor.fetchall()
-
 
 def get_products(connection):
     cursor = connection.cursor()
@@ -26,9 +39,21 @@ def get_products(connection):
 def get_user_by_id(connection,user_id):
     cursor = connection.cursor()
     cursor.execute("""
-    SELECT username, email, city
-    FROM users
-    WHERE user_id = ?""",(user_id,))
+        SELECT
+            users.user_id,
+            users.username,
+            users.email,
+            users.city,
+            COUNT(DISTINCT orders.order_id) AS orders_count,
+            COALESCE(SUM(order_items.quantity),0) AS total_quantity,
+            COALESCE(SUM(order_items.quantity*order_items.price_at_the_moment),0) AS revenue
+        FROM users
+        LEFT JOIN orders
+            ON orders.user_id = users.user_id
+            AND orders.status = 'completed'
+        LEFT JOIN order_items
+            ON order_items.order_id = orders.order_id
+        WHERE users.user_id = ?""",(user_id,))
     return cursor.fetchone()
 
 
@@ -69,7 +94,7 @@ def get_product_by_id(connection,product_id):
     return cursor.fetchone()
 
 
-def get_product_by_category(connection,category_id):
+def get_products_by_category(connection,category_id):
     cursor = connection.cursor()
     cursor.execute("""
     SELECT * 
@@ -208,20 +233,3 @@ def get_category_statistic(connection):
     return cursor.fetchall()
 
 
-def get_user_statistic(connection):
-    cursor = connection.cursor()
-    cursor.execute("""
-    SELECT
-        users.user_id,
-        users.username,
-        COUNT(DISTINCT orders.order_id) AS orders_count,
-        COALESCE(SUM(order_items.quantity),0) AS total_quantity,
-        COALESCE(SUM(order_items.quantity*order_items.price_at_the_moment),0) AS revenue
-    FROM users
-    LEFT JOIN orders
-        ON orders.user_id = users.user_id
-        AND orders.status = 'completed'
-    LEFT JOIN order_items
-        ON order_items.order_id = orders.order_id
-    GROUP BY users.user_id""")
-    return cursor.fetchall()

@@ -1,8 +1,3 @@
-import pandas as pd
-
-def to_dataframe(rows):
-    return pd.DataFrame([dict(row) for row in rows])
-
 
 def orders_count(orders):
     return len(orders)
