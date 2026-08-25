@@ -16,15 +16,20 @@ def get_average_order_price(orders):
 
 
 def get_most_saled(products):
-    return products[products['total_quantity']==max(products['total_quantity'])]
-
+    sale_count = products["total_quantity"].max()
+    result = products[products["total_quantity"]==sale_count]["product_name"].tolist()
+    result.append(int(sale_count))
+    return result
 
 def get_most_profitable(products):
-    return products[products['revenue']==max(products['revenue'])]
+    revenue = products["revenue"].max()
+    result = products[products["revenue"]==revenue]["product_name"].tolist()
+    result.append(int(revenue))
+    return result
 
 
 def get_least_saled(products):
-    return products[products['total_quantity']==min(products['total_quantity'])]
+    return products[products["total_quantity"]==min(products["total_quantity"])]
 
 
 def get_user_most_purchases(users):

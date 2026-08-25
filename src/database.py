@@ -29,7 +29,7 @@ def get_users(connection):
 def get_products(connection):
     cursor = connection.cursor()
     cursor.execute("""
-    SELECT products.product_name, products.price, products.quantity,categories.category_name
+    SELECT products.product_id, products.product_name, products.price, products.quantity,categories.category_name
     FROM products
     JOIN categories
     ON categories.category_id = products.category_id""")
@@ -61,7 +61,7 @@ def create_user(connection,username,email,city,registration_date):
     cursor = connection.cursor()
     cursor.execute("""
     INSERT INTO users(username,email,city,registration_date)
-    VALUES (?,?,?,?,?)""",(username,email,city,registration_date))
+    VALUES (?,?,?,?)""",(username,email,city,registration_date))
     connection.commit()
     return cursor.lastrowid
 
