@@ -3,6 +3,7 @@ import service
 from datetime import date
 from fastapi.responses import HTMLResponse
 
+
 app = FastAPI()
 
 @app.get('/',response_class=HTMLResponse)
@@ -13,7 +14,8 @@ def home():
     <a href="/users">Users</a><br>
     <a href="/orders">Orders</a><br>
     <a href="/products">Products</a><br>
-    <a href="/categories">Categories</a><br>"""
+    <a href="/categories">Categories</a><br>
+    <a href="/analitics">Analitics</a><br>"""
 
 @app.get("/users",response_class=HTMLResponse)
 def get_users():
@@ -67,7 +69,7 @@ def get_user_by_id(user_id: int):
     <form action="/users/update/{user_id}" method="get">
         <button type="submit">Update user</button>
     </form>
-    <form action="/orders/by_user_id" method="get">
+    <form action="/users/delete" method="post">
         <input type="hidden" name="user_id" value="{user_id}">
         <button type="submit">Delete user</button>
     </form>"""
@@ -148,6 +150,7 @@ def create_user(
 @app.get('/users/update/{user_id}',response_class=HTMLResponse)
 def update_user_form(user_id: int):
     return f"""
+    <a href="/">menu</a><br>
     <form action="/users/update/{user_id}" method="post">
         <input type="text" name="username" placeholder="Username:">
         <input type="email" name="email" placeholder="Email:">
@@ -169,6 +172,7 @@ def update_user(
 @app.get('/orders',response_class=HTMLResponse)
 def get_orders():
     html = f"""
+    <a href="/">menu</a><br>
     <h1>Orders</h1>
     <table border="1">
         <tr>
@@ -182,7 +186,7 @@ def get_orders():
     for ind, order in orders.iterrows():
         html+=f"""
         <tr>
-            <td>{order["order_id"]}</td>
+            <td><a href="/orders/items/{order["order_id"]}">{order["order_id"]}</td>
             <td>{order["user_id"]}</td>
             <td>{order["order_date"]}</td>
             <td>{order["status"]}</td>
@@ -194,12 +198,13 @@ def get_orders():
 @app.get('/products',response_class=HTMLResponse)
 def get_products():
     html = f"""
+        <a href="/">menu</a><br>
         <h1>Products</h1>
         <table border="1">
             <tr>
                 <th>Product ID</th>
                 <th>Product name</th>
-                <th>Category ID</th>
+                <th>Category</th>
                 <th>price</th>
                 <th>quantity</th>
             </tr>
@@ -208,7 +213,7 @@ def get_products():
     for ind, product in products.iterrows():
         html += f"""
             <tr>
-                <td>{product["product_id"]}</td>
+                <td><a href="/products/{product["product_id"]}">{product["product_id"]}</a><br></td>
                 <td>{product["product_name"]}</td>
                 <td>{product["category_name"]}</td>
                 <td>{product["price"]}</td>
@@ -221,6 +226,7 @@ def get_products():
 @app.get('/categories',response_class=HTMLResponse)
 def get_categories():
     html = f"""
+        <a href="/">menu</a><br>
         <h1>Categories</h1>
         <table border="1">
             <tr>
@@ -234,7 +240,7 @@ def get_categories():
     for ind, category in categories.iterrows():
         html += f"""
             <tr>
-                <td>{category["category_id"]}</td>
+                <td><a href="/categories/{category["category_id"]}">{category["category_id"]}</a><br></td>
                 <td>{category["category_name"]}</td>
                 <td>{category["total_quantity"]}</td>
                 <td>{category["revenue"]}</td>
@@ -242,4 +248,114 @@ def get_categories():
     html += """
         </table"""
     return html
+
+@app.get('/analitics',response_class=HTMLResponse)
+def get_analitics():
+    total_revenue = service.get_total_revenue()
+    average = service.get_average_order_price()
+    orders_count = service.get_orders_count()
+    complete_orders_count = service.get_complete_orders_count()
+    most_sold_product = service.get_most_sold_product()
+    least_sold_product = service.get_least_sold_product()
+    most_profitable_product = service.get_most_profitable_product()
+    most_purchase_user = service.get_most_purchases_user()
+    least_purchase_user = service.get_least_purchases_user()
+    most_sold_category = service.get_most_sold_category()
+    return f"""
+    <a href="/">menu</a><br>
+    <h1>Analitics</h1>
+    <h2>Orders</h2>
+    <p>Total revenue: {total_revenue}</p>
+    <p>Average order: {average}</p>
+    <p>Orders: {orders_count}</p>
+    <p>Complete orders: {complete_orders_count}</p>
+    <h2>Products</h2>
+    <p>Most sold: {most_sold_product[0]} {most_sold_product[1]}</p>
+    <p>Least sold: {least_sold_product[0]} {least_sold_product[1]}</p>
+    <p>Most profitable: {most_profitable_product[0]} {most_profitable_product[1]}</p>
+    <h2>Users</h2>
+    <p>Most purchases: {most_purchase_user[0]} {most_purchase_user[1]}</p>
+    <p>Least purchases: {least_purchase_user[0]} {least_purchase_user[1]}</p>
+    <h2>Category</h2>
+    <p>Best category: {most_sold_category[0]} {most_sold_category[1]}</p>"""
+
+@app.post("/users/delete",response_class=HTMLResponse)
+def delete_user(user_id: int = Form()):
+    rows = service.delete_user(user_id)
+    if rows>0:
+        return f"""
+        <a href="/">menu</a><br>
+        <h1>User with id:{user_id} has been delete</h1>"""
+    else:
+        return f"""
+        <a href="/">menu</a><br>
+        <h1>User with id:{user_id} hasnt been delete</h1>"""
+
+@app.get('/categories/{category_id}',response_class=HTMLResponse)
+def get_products_by_category_id(category_id: int):
+    products = service.get_products_by_category(category_id)
+    category_name = service.get_category_name(category_id)
+    html = f"""
+    <a href="/">menu</a><br>
+    <h1>{category_name} products:</h1>
+    <table border="1">
+        <tr>
+            <th>Product ID</th>
+            <th>Product name</th>
+            <th>Price</th>
+            <th>Quantity</th>
+        </tr>"""
+    for ind,product in products.iterrows():
+        html += f"""
+        <tr>
+            <td>{product["product_id"]}</td>
+            <td>{product["product_name"]}</td>
+            <td>{product["price"]}</td>
+            <td>{product["quantity"]}</td>
+        </tr>"""
+    html+="""
+    </table>"""
+    return html
+
+@app.get("/products/update",response_class=HTMLResponse)
+def update_product_form(product_id: int):
+    return f"""
+<a href="/">menu</a><br>
+<form action="/products/update" method="post">
+    <input type="number" name="new_price" placeholder="new price:">
+    <input type="number" name="new_quantity" placeholder="new quantity:">
+    <input type="hidden" name="product_id" value="{product_id}">
+    <button type="submit">Update</button>
+</form>"""
+
+@app.post("/products/update",response_class=HTMLResponse)
+def update_product(
+        product_id: int = Form(),
+        new_price: int = Form(0),
+        new_quantity: int = Form(0)
+):
+    service.update_product(new_quantity,new_price,product_id)
+    if new_price==0 and new_quantity==0:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Product hasnt been update</h1>"""
+    return """
+    <a href="/">menu</a><br>
+    <h1>Product has been update</h1>"""
+
+@app.get("/products/{product_id}",response_class=HTMLResponse)
+def get_product_by_id(product_id: int):
+    product = service.get_product_by_id(product_id)
+    category_name = service.get_category_name(product["category_id"])
+    return f"""
+    <a href="/">menu</a><br>
+    <h1>Product ID: {product_id}</h1>
+    <h1>Product name: {product["product_name"]}</h1>
+    <h1>Product category: {category_name}</h1>
+    <h1>Product price: {product["price"]}</h1>
+    <h1>Product quantity: {product["quantity"]}</h1>
+    <form action="/products/update" method="get">
+        <input type="hidden" name="product_id" value="{product_id}">
+        <button type="submit">Update product</button>
+    </form>"""
 

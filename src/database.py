@@ -103,32 +103,12 @@ def get_products_by_category(connection,category_id):
     return cursor.fetchall()
 
 
-def update_product_price(connection,price,product_id):
+def get_category_name(connection,category_id):
     cursor = connection.cursor()
     cursor.execute("""
-    UPDATE products
-    SET price = ?
-    WHERE product_id = ?""",(price,product_id))
-    connection.commit()
-    return cursor.rowcount
-
-
-def update_product_quantity(connection,quantity,product_id):
-    cursor = connection.cursor()
-    cursor.execute("""
-    UPDATE products
-    SET quantity = ?
-    WHERE product_id = ?""",(quantity,product_id))
-    connection.commit()
-    return cursor.rowcount
-
-
-def get_category_id(connection,category_name):
-    cursor = connection.cursor()
-    cursor.execute("""
-    SELECT category_id
+    SELECT category_name
     FROM categories
-    WHERE category_name = ?""", (category_name,))
+    WHERE category_id = ?""", (category_id,))
     return cursor.fetchone()
 
 
@@ -232,4 +212,11 @@ def get_category_statistic(connection):
     GROUP BY categories.category_id""")
     return cursor.fetchall()
 
-
+def update_product(connection,quantity,price,product_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+    UPDATE products
+    SET quantity = ?, price = ?
+    WHERE product_id = ?""",(quantity,price,product_id))
+    connection.commit()
+    return cursor.rowcount

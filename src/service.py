@@ -34,8 +34,8 @@ def update_user(user_id,username,email,city):
 
 def delete_user(user_id):
     connection = database.get_connection()
-    id = database.delete_user(connection,user_id)
-    return id
+    rows = database.delete_user(connection,user_id)
+    return rows
 
 def get_product_by_id(product_id):
     connection = database.get_connection()
@@ -45,20 +45,6 @@ def get_products_by_category(category_id):
     connection = database.get_connection()
     products = database.get_products_by_category(connection,category_id)
     return to_dataframe(products)
-
-def update_product_price(price,product_id):
-    connection = database.get_connection()
-    id = database.update_product_price(connection,price,product_id)
-    return id
-
-def update_product_quantity(quantity,product_id):
-    connection = database.get_connection()
-    id = database.update_product_quantity(connection,quantity,product_id)
-    return id
-
-def get_category_by_id(category_name):
-    connection = database.get_connection()
-    return database.get_category_id(connection,category_name)
 
 def get_orders():
     connection = database.get_connection()
@@ -143,3 +129,18 @@ def get_most_sold_category():
     categories = database.get_category_statistic(connection)
     categories = to_dataframe(categories)
     return analytics.get_most_saled_category(categories)
+
+def get_category_name(category_id):
+    connection=database.get_connection()
+    category_name = database.get_category_name(connection,category_id)
+    return category_name["category_name"]
+
+def update_product(quantity,price,product_id):
+    connection = database.get_connection()
+    product = get_product_by_id(product_id)
+    if quantity == 0:
+        quantity = product["quantity"]
+    if price == 0:
+        price = product["price"]
+    rows = database.update_product(connection,quantity,price,product_id)
+    return rows
