@@ -12,29 +12,42 @@ def get_revenue(orders_items):
 
 
 def get_average_order_price(orders):
-    return orders['order_total'].mean()
+    return int(orders['order_total'].mean())
 
 
 def get_most_saled(products):
     sale_count = products["total_quantity"].max()
-    result = products[products["total_quantity"]==sale_count]["product_name"].tolist()
-    result.append(int(sale_count))
+    product = products[products['total_quantity'] == sale_count]["product_name"].tolist()[0]
+    result = [product, int(sale_count)]
     return result
 
 def get_most_profitable(products):
     revenue = products["revenue"].max()
-    result = products[products["revenue"]==revenue]["product_name"].tolist()
-    result.append(int(revenue))
+    product = products[products["revenue"]==revenue]["product_name"].tolist()[0]
+    result = [product,int(revenue)]
     return result
 
 
 def get_least_saled(products):
-    return products[products["total_quantity"]==min(products["total_quantity"])]
+    sale_count = products['total_quantity'].min()
+    product = products[products['total_quantity']==sale_count]["product_name"].tolist()[0]
+    result=[product,int(sale_count)]
+    return result
 
+def get_most_purchases(users):
+    sale_count = users["total_quantity"].max()
+    user = users[users['total_quantity'] == sale_count]["username"].tolist()[0]
+    result = [user, int(sale_count)]
+    return result
 
-def get_user_most_purchases(users):
-    return users[users['orders_count']==max(users['orders_count'])]
+def get_least_purchases(users):
+    sale_count = users["total_quantity"].min()
+    user = users[users['total_quantity'] == sale_count]["username"].tolist()[0]
+    result = [user, int(sale_count)]
+    return result
 
-
-def get_user_least_purchases(users):
-    return users[users['orders_count'] == min(users['orders_count'])]
+def get_most_saled_category(categories):
+    sale_count = categories["total_quantity"].max()
+    category = categories[categories['total_quantity'] == sale_count]["category_name"].tolist()[0]
+    result = [category, int(sale_count)]
+    return result

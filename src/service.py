@@ -87,35 +87,59 @@ def get_category_satistic():
 def get_total_revenue():
     connection = database.get_connection()
     items = database.get_order_items_by_status(connection,"completed")
+    items = to_dataframe(items)
     return analytics.get_revenue(items)
 
 def get_average_order_price():
     connection = database.get_connection()
     prices = database.get_orders_pricies(connection)
+    prices = to_dataframe(prices)
     return analytics.get_average_order_price(prices)
 
 def get_orders_count():
     connection = database.get_connection()
     orders = database.get_orders(connection)
+    orders = to_dataframe(orders)
     return analytics.orders_count(orders)
 
 def get_complete_orders_count():
     connection = database.get_connection()
     orders = database.get_orders(connection)
+    orders = to_dataframe(orders)
     return analytics.complete_orders_count(orders)
 
 def get_most_sold_product():
     connection = database.get_connection()
     products = database.get_product_statistic(connection)
     products = to_dataframe(products)
-    result = analytics.get_most_saled(products)
-    return result
+    return analytics.get_most_saled(products)
 
 def get_most_profitable_product():
     connection = database.get_connection()
     products = database.get_product_statistic(connection)
     products = to_dataframe(products)
-    result = analytics.get_most_profitable(products)
-    return result
+    return analytics.get_most_profitable(products)
 
-print(get_most_profitable_product())
+def get_least_sold_product():
+    connection = database.get_connection()
+    products = database.get_product_statistic(connection)
+    products = to_dataframe(products)
+    return analytics.get_least_saled(products)
+
+def get_most_purchases_user():
+    connection = database.get_connection()
+    users = database.get_users(connection)
+    users = to_dataframe(users)
+    return analytics.get_most_purchases(users)
+
+def get_least_purchases_user():
+    connection = database.get_connection()
+    users = database.get_users(connection)
+    users = to_dataframe(users)
+    return analytics.get_least_purchases(users)
+
+def get_most_sold_category():
+    connection = database.get_connection()
+    categories = database.get_category_statistic(connection)
+    categories = to_dataframe(categories)
+    return analytics.get_most_saled_category(categories)
