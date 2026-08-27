@@ -110,3 +110,5 @@ VALUES
 (24, 12, 8, 1, 45);
 select *from orders;
 select * from order_items;
+DROP TABLE order_items;
+DROP TABLE orders;

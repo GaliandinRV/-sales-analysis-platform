@@ -17,8 +17,7 @@ def get_user_by_id(user_id):
 
 def create_user(username,email,city,registration_date):
     connection = database.get_connection()
-    id = database.create_user(connection,username,email,city,registration_date)
-    return id
+    return database.create_user(connection,username,email,city,registration_date)
 
 def update_user(user_id,username,email,city):
     connection = database.get_connection()
@@ -29,13 +28,11 @@ def update_user(user_id,username,email,city):
         email = user['email']
     if not city:
         city = user['city']
-    id = database.update_user(connection,user_id,username,email,city)
-    return id
+    return database.update_user(connection,user_id,username,email,city)
 
 def delete_user(user_id):
     connection = database.get_connection()
-    rows = database.delete_user(connection,user_id)
-    return rows
+    return database.delete_user(connection,user_id)
 
 def get_product_by_id(product_id):
     connection = database.get_connection()
@@ -138,9 +135,36 @@ def get_category_name(category_id):
 def update_product(quantity,price,product_id):
     connection = database.get_connection()
     product = get_product_by_id(product_id)
-    if quantity == 0:
+    if quantity is None:
         quantity = product["quantity"]
-    if price == 0:
+    if price is None:
         price = product["price"]
-    rows = database.update_product(connection,quantity,price,product_id)
-    return rows
+    return database.update_product(connection,quantity,price,product_id)
+
+def delete_order(order_id):
+    connection = database.get_connection()
+    return database.delete_order(connection,order_id)
+
+def create_order(user_id,order_date,status):
+    connection = database.get_connection()
+    return database.create_order(connection, user_id, order_date, status)
+
+def update_order(order_id,status):
+    connection = database.get_connection()
+    return database.update_order(connection,order_id, status)
+
+def add_order_item(order_id,product_id,quantity,price_at_the_moment):
+    connection = database.get_connection()
+    return database.add_order_item(connection, order_id, product_id, quantity, price_at_the_moment)
+
+def update_order_item(quantity,order_item_id):
+    connection = database.get_connection()
+    return database.update_order_item(connection, quantity, order_item_id)
+
+def delete_order_item(order_item_id):
+    connection = database.get_connection()
+    return database.delete_order_item(connection, order_item_id)
+
+def get_order_item_by_id(order_item_id):
+    connection = database.get_connection()
+    return database.get_order_item_by_id(connection, order_item_id)

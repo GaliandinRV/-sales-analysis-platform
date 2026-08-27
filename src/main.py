@@ -100,9 +100,17 @@ def get_user_orders(user_id: int):
 @app.get('/orders/items/{order_id}',response_class=HTMLResponse)
 def get_order_items(order_id: int):
     items = service.get_order_items(order_id)
+    total_price=0
     html = f"""
     <a href="/">menu</a><br>
     <h1>Order ID {order_id} items:</h1>
+    <h3>Add item:</h3>
+    <form action='/items/add' method='post'>
+        <input type="number" name="product_id" placeholder="Product ID:">
+        <input type="number" name="quantity" placeholder="Quantity:">
+        <input type="hidden" name="order_id" value="{order_id}">
+        <button type="submit">Create</button>
+    </form>
     <table border="1">
         <tr>
             <th>product name</th>
@@ -110,14 +118,16 @@ def get_order_items(order_id: int):
             <th>price at the moment</th>
         </tr>"""
     for ind,item in items.iterrows():
+        total_price+=item['price_at_the_moment']
         html+=f"""
         <tr>
-            <td>{item['product_name']}</td>
+            <td><a href="/items/{item["order_item_id"]}">{item['product_name']}</a><br></td>
             <td>{item['quantity']}</td>
             <td>{item['price_at_the_moment']}</td>
         </tr>"""
-    html+="""
-    </table>"""
+    html+=f"""
+    </table>
+    <h1>Total price: {total_price}</h1>"""
     return html
 
 @app.get('/users/add',response_class=HTMLResponse)
@@ -186,13 +196,13 @@ def get_orders():
     for ind, order in orders.iterrows():
         html+=f"""
         <tr>
-            <td><a href="/orders/items/{order["order_id"]}">{order["order_id"]}</td>
+            <td><a href="/orders/items/{order["order_id"]}">{order["order_id"]}</a><br></td>
             <td>{order["user_id"]}</td>
             <td>{order["order_date"]}</td>
             <td>{order["status"]}</td>
         </tr>"""
     html+="""
-    </table"""
+    </table>"""
     return html
 
 @app.get('/products',response_class=HTMLResponse)
@@ -220,7 +230,7 @@ def get_products():
                 <td>{product["quantity"]}</td>
             </tr>"""
     html += """
-        </table"""
+        </table>"""
     return html
 
 @app.get('/categories',response_class=HTMLResponse)
@@ -246,7 +256,7 @@ def get_categories():
                 <td>{category["revenue"]}</td>
             </tr>"""
     html += """
-        </table"""
+        </table>"""
     return html
 
 @app.get('/analitics',response_class=HTMLResponse)
@@ -331,11 +341,11 @@ def update_product_form(product_id: int):
 @app.post("/products/update",response_class=HTMLResponse)
 def update_product(
         product_id: int = Form(),
-        new_price: int = Form(0),
-        new_quantity: int = Form(0)
+        new_price: int | None = Form(None),
+        new_quantity: int | None = Form(None)
 ):
     service.update_product(new_quantity,new_price,product_id)
-    if new_price==0 and new_quantity==0:
+    if new_price is None and new_quantity is None:
         return """
         <a href="/">menu</a><br>
         <h1>Product hasnt been update</h1>"""
@@ -359,3 +369,47 @@ def get_product_by_id(product_id: int):
         <button type="submit">Update product</button>
     </form>"""
 
+@app.get('/items/{order_item_id}',response_class=HTMLResponse)
+def get_item(order_item_id: int):
+    item = service.get_order_item_by_id(order_item_id)
+    product = service.get_product_by_id(item['product_id'])
+    return f"""
+<a href="/">menu</a><br>
+<h1>Order item ID {order_item_id}</h1>
+<h2>Product name: {product['product_name']}</h2>
+<h2>Order ID: {item['order_id']}</h2>
+<h2>Quantity: {item['quantity']}</h2>
+<h2>Price at the moment: {item['price_at_the_moment']}</h2>
+<h3>Edit quantity:</h3>
+<form action="/items/update/{order_item_id}" method="post">
+    <input type="number" name="quantity" placeholder="quantity:">
+    <button type="submit">Update</button>
+</form>
+<form action="/items/delete" method="post">
+    <input type="hidden" name="order_item_id" value="{order_item_id}">
+    <button type="submit">Delete</button>
+</form>
+<h3></h3>"""
+
+@app.post('/items/update/{order_item_id}',response_class=HTMLResponse)
+def update_item(order_item_id: int,quantity:int = Form()):
+    service.update_order_item(quantity, order_item_id)
+    return """
+    <a href="/">menu</a><br>
+    <h1>Item quantity updated!</h1>"""
+
+@app.post('/items/delete',response_class=HTMLResponse)
+def delete_item(order_item_id: int = Form()):
+    service.delete_order_item(order_item_id)
+    return """
+    <a href="/">menu</a><br>
+    <h1>Item deleted!</h1>"""
+
+@app.post('/items/add',response_class=HTMLResponse)
+def add_item(product_id: int = Form(),order_id: int = Form(),quantity: int = Form()):
+    product = service.get_product_by_id(product_id)
+    price = product['price']
+    service.add_order_item(order_id,product_id,quantity,price)
+    return """
+    <a href="/">menu</a><br>
+    <h1>Item added!</h1>"""

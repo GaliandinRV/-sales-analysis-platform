@@ -23,6 +23,7 @@ def get_users(connection):
         AND orders.status = 'completed'
     LEFT JOIN order_items
         ON order_items.order_id = orders.order_id
+
     GROUP BY users.user_id""")
     return cursor.fetchall()
 
@@ -53,7 +54,8 @@ def get_user_by_id(connection,user_id):
             AND orders.status = 'completed'
         LEFT JOIN order_items
             ON order_items.order_id = orders.order_id
-        WHERE users.user_id = ?""",(user_id,))
+        WHERE users.user_id = ?
+        GROUP BY users.user_id""",(user_id,))
     return cursor.fetchone()
 
 
@@ -131,7 +133,7 @@ def get_order_by_id(connection,order_id):
 def get_order_items(connection, order_id):
     cursor = connection.cursor()
     cursor.execute("""
-    SELECT products.product_name, order_items.quantity, order_items.price_at_the_moment
+    SELECT order_items.order_item_id, products.product_name, order_items.quantity, order_items.price_at_the_moment
     FROM order_items
     JOIN products
          ON products.product_id = order_items.product_id
@@ -220,3 +222,61 @@ def update_product(connection,quantity,price,product_id):
     WHERE product_id = ?""",(quantity,price,product_id))
     connection.commit()
     return cursor.rowcount
+
+def update_order(connection,order_id,status):
+    cursor = connection.cursor()
+    cursor.execute("""
+    UPDATE orders
+    SET status = ?
+    WHERE order_id = ?""",(status, order_id))
+    connection.commit()
+    return cursor.rowcount
+
+def add_order_item(connection,order_id,product_id,quantity,price_at_the_moment):
+    cursor = connection.cursor()
+    cursor.execute("""
+    INSERT INTO order_items (order_id, product_id,quantity,price_at_the_moment) 
+    VALUES (?,?,?,?)""",(order_id,product_id,quantity,price_at_the_moment))
+    connection.commit()
+    return cursor.lastrowid
+
+def update_order_item(connection,quantity,order_item_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+    UPDATE order_items
+    SET quantity = ?
+    WHERE order_item_id = ?""",(quantity,order_item_id))
+    connection.commit()
+    return cursor.rowcount
+
+def delete_order_item(connection,order_item_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+    DELETE FROM order_items
+    WHERE order_item_id = ?""",(order_item_id,))
+    connection.commit()
+    return cursor.rowcount
+
+def create_order(connection,user_id,order_date,status):
+    cursor = connection.cursor()
+    cursor.execute("""
+    INSERT INTO orders (user_id,order_date,status)
+    VALUES (?,?,?)""",(user_id,order_date,status))
+    connection.commit()
+    return cursor.lastrowid
+
+def delete_order(connection,order_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+    DELETE FROM orders
+    WHERE order_id = ?""",(order_id,))
+    connection.commit()
+    return cursor.rowcount
+
+def get_order_item_by_id(connection,order_item_id):
+    cursor = connection.cursor()
+    cursor.execute("""
+    SELECT *
+    FROM order_items
+    WHERE order_item_id = ?""",(order_item_id,))
+    return cursor.fetchone()
