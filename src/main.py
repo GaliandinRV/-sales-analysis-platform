@@ -49,8 +49,11 @@ def get_users():
 @app.get('/users/id',response_class=HTMLResponse)
 def get_user_by_id(user_id: int):
     user = service.get_user_by_id(user_id)
+    if user is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>User not found!<h1>"""
     return f"""
-    
     <a href="/">menu</a><br>
     
     <h1>User with ID = {user_id}</h1>
@@ -101,15 +104,40 @@ def get_user_orders(user_id: int):
 def get_order_items(order_id: int):
     items = service.get_order_items(order_id)
     total_price=0
+    order = service.get_order_by_id(order_id)
+    if order is None:
+        return """
+        <Order not found!"""
     html = f"""
     <a href="/">menu</a><br>
     <h1>Order ID {order_id} items:</h1>
+    <h3>Status: {order["status"]}</h3>
+    <form action="/orders/update" method="post">
+        <input type="hidden" name="order_id" value="{order_id}">
+        <select name="status">
+            <option value="completed">completed</option>
+            <option value="shipped">shipped</option>
+            <option value="cancelled">cancelled</option>
+            <option value="processing">processing</option>
+        </select>
+        <button type="submit">Update</button>
+    </form>
     <h3>Add item:</h3>
     <form action='/items/add' method='post'>
-        <input type="number" name="product_id" placeholder="Product ID:">
+        <select name="product_id">"""
+    products = service.get_products()
+    for ind, product in products.iterrows():
+        html+=f"""
+            <option value="{product['product_id']}">{product['product_name']}</option>"""
+    html+=f"""
+        </select>
         <input type="number" name="quantity" placeholder="Quantity:">
         <input type="hidden" name="order_id" value="{order_id}">
         <button type="submit">Create</button>
+    </form>
+    <form action="/orders/delete" method="post">
+        <input type="hidden" name="order_id" value="{order_id}">
+        <button type="submit">Delete order</button>
     </form>
     <table border="1">
         <tr>
@@ -118,7 +146,7 @@ def get_order_items(order_id: int):
             <th>price at the moment</th>
         </tr>"""
     for ind,item in items.iterrows():
-        total_price+=item['price_at_the_moment']
+        total_price+=item['price_at_the_moment']*item['quantity']
         html+=f"""
         <tr>
             <td><a href="/items/{item["order_item_id"]}">{item['product_name']}</a><br></td>
@@ -152,6 +180,10 @@ def create_user(
 ):
     registration_date = date.today()
     user_id = service.create_user(username,email,city,registration_date)
+    if user_id is None:
+        return """
+        <a href="/users">Back to users</a><br>
+        <h1>User not created!</h1>"""
     return f"""
     <h1>User created!<h1>
     <p>User ID:{user_id}</p>
@@ -176,7 +208,12 @@ def update_user(
         city: str = Form("")
 ):
     result = service.update_user(user_id,username,email,city)
+    if result is None:
+        return """
+                <a href="/users">Back to users</a><br>
+                <h1>User not updated!</h1>"""
     return f"""
+    <a href="/">menu</a><br>
     <h1>User with id {user_id} update</h1>"""
 
 @app.get('/orders',response_class=HTMLResponse)
@@ -184,6 +221,7 @@ def get_orders():
     html = f"""
     <a href="/">menu</a><br>
     <h1>Orders</h1>
+    <a href='/orders/create'>Create order</a><br>
     <table border="1">
         <tr>
             <th>Order ID</th>
@@ -292,19 +330,29 @@ def get_analitics():
 @app.post("/users/delete",response_class=HTMLResponse)
 def delete_user(user_id: int = Form()):
     rows = service.delete_user(user_id)
-    if rows>0:
+    if rows is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>User cant be deleted!</h1>
+        """
+    elif rows > 0:
         return f"""
         <a href="/">menu</a><br>
         <h1>User with id:{user_id} has been delete</h1>"""
     else:
         return f"""
         <a href="/">menu</a><br>
-        <h1>User with id:{user_id} hasnt been delete</h1>"""
+        <h1>User with id:{user_id} dont exist</h1>"""
 
 @app.get('/categories/{category_id}',response_class=HTMLResponse)
 def get_products_by_category_id(category_id: int):
     products = service.get_products_by_category(category_id)
     category_name = service.get_category_name(category_id)
+    if category_name is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Category not found!</h1>
+        """
     html = f"""
     <a href="/">menu</a><br>
     <h1>{category_name} products:</h1>
@@ -344,11 +392,16 @@ def update_product(
         new_price: int | None = Form(None),
         new_quantity: int | None = Form(None)
 ):
-    service.update_product(new_quantity,new_price,product_id)
-    if new_price is None and new_quantity is None:
+    if (new_quantity is not None and new_quantity<1) or (new_price is not None and new_price<1):
         return """
         <a href="/">menu</a><br>
         <h1>Product hasnt been update</h1>"""
+    result = service.update_product(new_quantity, new_price, product_id)
+    if result is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Product not found!</h1>
+        """
     return """
     <a href="/">menu</a><br>
     <h1>Product has been update</h1>"""
@@ -356,7 +409,17 @@ def update_product(
 @app.get("/products/{product_id}",response_class=HTMLResponse)
 def get_product_by_id(product_id: int):
     product = service.get_product_by_id(product_id)
+    if product is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Product not found!</h1>
+        """
     category_name = service.get_category_name(product["category_id"])
+    if category_name is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Category not found!</h1>
+        """
     return f"""
     <a href="/">menu</a><br>
     <h1>Product ID: {product_id}</h1>
@@ -370,9 +433,19 @@ def get_product_by_id(product_id: int):
     </form>"""
 
 @app.get('/items/{order_item_id}',response_class=HTMLResponse)
-def get_item(order_item_id: int):
+def get_items(order_item_id: int):
     item = service.get_order_item_by_id(order_item_id)
+    if item is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Item not found!</h1>
+        """
     product = service.get_product_by_id(item['product_id'])
+    if product is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Product not found!</h1>
+        """
     return f"""
 <a href="/">menu</a><br>
 <h1>Order item ID {order_item_id}</h1>
@@ -393,23 +466,107 @@ def get_item(order_item_id: int):
 
 @app.post('/items/update/{order_item_id}',response_class=HTMLResponse)
 def update_item(order_item_id: int,quantity:int = Form()):
-    service.update_order_item(quantity, order_item_id)
+    if quantity<1:
+        return """
+        <a href="/">menu</a><br>
+        <h1>item quantity dasnt updated!"""
+    result = service.update_order_item(quantity, order_item_id)
+    if result == 0:
+        return """<a href="/">menu</a><br>
+        <h1>Item not found!</h1>
+        """
     return """
     <a href="/">menu</a><br>
     <h1>Item quantity updated!</h1>"""
 
 @app.post('/items/delete',response_class=HTMLResponse)
 def delete_item(order_item_id: int = Form()):
-    service.delete_order_item(order_item_id)
+    result = service.delete_order_item(order_item_id)
+    if result == 0:
+        return """<a href="/">menu</a><br>
+        <h1>Item not found!</h1>
+        """
     return """
     <a href="/">menu</a><br>
     <h1>Item deleted!</h1>"""
 
 @app.post('/items/add',response_class=HTMLResponse)
 def add_item(product_id: int = Form(),order_id: int = Form(),quantity: int = Form()):
+    if quantity<1:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Item dont added!</h1>"""
     product = service.get_product_by_id(product_id)
+    if product is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Product not exist!</h1>"""
     price = product['price']
-    service.add_order_item(order_id,product_id,quantity,price)
+    order_item_id = service.add_order_item(order_id,product_id,quantity,price)
+    if order_item_id is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Item dont added!</h1>"""
     return """
     <a href="/">menu</a><br>
     <h1>Item added!</h1>"""
+
+@app.post('/orders/delete',response_class=HTMLResponse)
+def delete_order(order_id: int = Form()):
+    rowcount = service.delete_order(order_id)
+    if rowcount is None:
+        return """
+    <a href="/users">Back to users</a><br>
+    <h1>Order dont deleted!</h1>"""
+    if rowcount == 0:
+        return """
+    <a href="/">menu</a><br>
+    <h1>Order not deleted</h1>"""
+    return """
+    <a href="/">menu</a><br>
+    <h1>Order deleted</h1>"""
+
+@app.get('/orders/create',response_class=HTMLResponse)
+def create_order_form():
+    return """
+    <a href="/">menu</a><br>
+    <h1>Create order</h1>
+    <form action="/orders/create" method="post">
+        <input type="number" name="user_id" placeholder="user ID">
+        <select name="status">
+            <option value="completed">completed</option>
+            <option value="shipped">shipped</option>
+            <option value="cancelled">cancelled</option>
+            <option value="processing">processing</option>
+        </select>
+        <button type="submit">Create</button>
+    </form>"""
+
+@app.post('/orders/create',response_class=HTMLResponse)
+def create_order(user_id: int = Form(), status: str = Form()):
+    user = service.get_user_by_id(user_id)
+    if user is None:
+        return """
+        <a href="/">menu</a><br>
+        <h1>User not exist</h1>"""
+    order_date = date.today()
+    order_id = service.create_order(user_id, order_date, status)
+    if order_id is None:
+        return """
+        <a href="/users">Back to users</a><br>
+        <h1>Order not created</h1>"""
+    return """
+    <a href="/">menu</a><br>
+    <h1>Order created</h1>"""
+
+@app.post('/orders/update',response_class=HTMLResponse)
+def update_order(order_id: int = Form(), status: str = Form()):
+    result = service.update_order(order_id, status)
+    if result == 0:
+        return """
+        <a href="/">menu</a><br>
+        <h1>Order not found!</h1>
+        """
+    return """
+    <a href="/">menu</a><br>
+    <h1>Order status updated!</h1>"""
