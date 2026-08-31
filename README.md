@@ -118,7 +118,7 @@ database.db используется локально и не хранится �
 1. Клонировать репозиторий
 
 
-git clone https://github.com/robertgalandin-ctrl/sales-analysis-platform.git
+git clone https://github.com/GaliandinRV/-sales-analysis-platform.git
 cd sales-analysis-platform
 
 2. Запустить приложение
