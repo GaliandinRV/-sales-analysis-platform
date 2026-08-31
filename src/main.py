@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Form
-import service
+from src import service
 from datetime import date
 from fastapi.responses import HTMLResponse
 

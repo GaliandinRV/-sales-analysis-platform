@@ -1,4 +1,5 @@
-import analytics, database, pandas, sqlite3
+import pandas, sqlite3
+from src import analytics, database
 def to_dataframe(rows):
     return pandas.DataFrame([dict(row) for row in rows])
 def with_connection(function):
@@ -27,13 +28,16 @@ def update_user(user_id, username, email, city):
         user = database.get_user_by_id(connection, user_id)
         if user is None:
             return None
-        if not username:
-            username = user['username']
-        if not email:
-            email = user['email']
-        if not city:
-            city = user['city']
-        return database.update_user(connection,user_id,username,email,city)
+        new_username = username
+        new_email = email
+        new_city = city
+        if not new_username:
+            new_username = user['username']
+        if not new_email:
+            new_email = user['email']
+        if not new_city:
+            new_city = user['city']
+        return database.update_user(connection,user_id,new_username,new_email,new_city)
     return with_connection(update)
 
 def delete_user(user_id):
@@ -102,11 +106,13 @@ def update_product(quantity,price,product_id):
         product = database.get_product_by_id(connection, product_id)
         if product is None:
             return None
-        if quantity is None:
-            quantity = product["quantity"]
-        if price is None:
-            price = product["price"]
-        return database.update_product(connection,quantity,price,product_id)
+        new_quantity = quantity
+        new_price = price
+        if new_quantity is None:
+            new_quantity = product["quantity"]
+        if new_price is None:
+            new_price = product["price"]
+        return database.update_product(connection,new_quantity,new_price,product_id)
     return with_connection(update)
 
 def delete_order(order_id):

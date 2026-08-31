@@ -1,7 +1,7 @@
 import sqlite3 as sql
 
 def get_connection():
-    connection = sql.connect('../database.db')
+    connection = sql.connect('/app/database.db')
     connection.execute("PRAGMA foreign_keys = ON")
     connection.row_factory = sql.Row
     return connection
